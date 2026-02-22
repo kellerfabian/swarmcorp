@@ -6,8 +6,8 @@ from agents.base_agent import BaseAgent
 
 
 class CEOAgent(BaseAgent):
-    def __init__(self, client: Optional[anthropic.Anthropic] = None):
-        super().__init__(agent_id="ceo", client=client)
+    def __init__(self, client: Optional[anthropic.Anthropic] = None, on_event=None):
+        super().__init__(agent_id="ceo", client=client, on_event=on_event)
 
     def set_initial_strategy(self, market_data: dict, context: str) -> dict:
         return self.call(

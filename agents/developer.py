@@ -6,8 +6,8 @@ from agents.base_agent import BaseAgent
 
 
 class DeveloperAgent(BaseAgent):
-    def __init__(self, client: Optional[anthropic.Anthropic] = None):
-        super().__init__(agent_id="developer", client=client)
+    def __init__(self, client: Optional[anthropic.Anthropic] = None, on_event=None):
+        super().__init__(agent_id="developer", client=client, on_event=on_event)
 
     def build_mvp(self, strategy: dict, context: str) -> dict:
         return self.call(

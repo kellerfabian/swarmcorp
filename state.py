@@ -54,6 +54,19 @@ class CompanyState:
         lines.append(f"- Kosten bisher: ${self.total_cost:.4f}")
         return "\n".join(lines)
 
+    def to_dashboard_dict(self) -> dict:
+        """JSON-serializable snapshot for the dashboard."""
+        return {
+            "company_name": self.company_name,
+            "industry": self.industry,
+            "business_model": self.business_model,
+            "iteration": self.iteration,
+            "total_cost": self.total_cost,
+            "satisfaction": self.feedback_history[-1].get("satisfaction_score") if self.feedback_history else None,
+            "strategy_summary": self.strategy.get("strategy_summary", ""),
+            "started_at": self.started_at,
+        }
+
     def save(self, filepath: str):
         self.last_updated = datetime.now().isoformat()
         os.makedirs(os.path.dirname(filepath), exist_ok=True)

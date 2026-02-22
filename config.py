@@ -27,6 +27,10 @@ MAX_DEV_REVIEW_LOOPS = 3
 WEB_SEARCH_ENABLED = True
 WEB_SEARCH_AGENTS = ["marketing", "ceo"]  # Agenten mit Web-Recherche
 
+# Dashboard
+DASHBOARD_HOST = "127.0.0.1"
+DASHBOARD_PORT = 8050
+
 # Paths (OpenClaw workspace pattern)
 PROJECT_ROOT = os.path.dirname(__file__)
 WORKSPACE_ROOT = os.path.join(PROJECT_ROOT, "workspace")

@@ -111,9 +111,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="SwarmCorp")
     parser.add_argument("--idea", type=str, help="Geschäftsidee als Startpunkt")
     parser.add_argument("--discuss", type=str, help="Schnelle Agent-Diskussion")
+    parser.add_argument("--dashboard", action="store_true", help="Web-Dashboard starten")
     args = parser.parse_args()
 
-    if args.discuss:
+    if args.dashboard:
+        from dashboard.server import run_dashboard
+        if args.discuss:
+            run_dashboard(topic=args.discuss, mode="discussion")
+        else:
+            run_dashboard(idea=args.idea or "", mode="simulation")
+    elif args.discuss:
         run_discussion(args.discuss)
     else:
         run_simulation(idea=args.idea or "")

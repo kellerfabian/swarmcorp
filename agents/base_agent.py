@@ -9,12 +9,13 @@ from config import MODELS, ANTHROPIC_API_KEY, WORKSPACE_ROOT, TokenUsage, WEB_SE
 
 
 class BaseAgent:
-    def __init__(self, agent_id: str, client: Optional[anthropic.Anthropic] = None):
+    def __init__(self, agent_id: str, client: Optional[anthropic.Anthropic] = None, on_event=None):
         self.agent_id = agent_id
         self.model = MODELS.get(agent_id, "claude-sonnet-4-5-20250929")
         self.client = client or anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
         self.total_usage = TokenUsage()
         self.web_search = WEB_SEARCH_ENABLED and agent_id in WEB_SEARCH_AGENTS
+        self.on_event = on_event
         self.soul = self._load_file("SOUL.md")
         self.skills = self._load_skills()
 
@@ -50,11 +51,16 @@ class BaseAgent:
         )
         return "\n\n".join(parts)
 
+    def _emit(self, event: dict):
+        if self.on_event:
+            self.on_event(event)
+
     def call(self, user_message: str, context: str = "", temperature: float = 0.7) -> dict:
         """Core agent loop step: context → prompt → model → parse → return."""
         system = self._build_system_prompt(context)
         emoji = "🔍" if self.web_search else "🤖"
         print(f"  {emoji} [{self.agent_id.upper()}] Denkt nach{' (+ Web Search)' if self.web_search else ''}...")
+        self._emit({"type": "agent_thinking", "agent": self.agent_id, "web_search": self.web_search})
 
         kwargs = dict(
             model=self.model,
@@ -81,6 +87,7 @@ class BaseAgent:
             for block in response.content:
                 if block.type == "web_search_tool_result":
                     print(f"    🌐 Web-Suche durchgeführt")
+                    self._emit({"type": "agent_web_search", "agent": self.agent_id})
                 if block.type == "tool_use":
                     tool_results.append({
                         "type": "tool_result",
@@ -107,7 +114,15 @@ class BaseAgent:
         raw = "".join(b.text for b in response.content if b.type == "text")
         print(f"  ✅ [{self.agent_id.upper()}] {loop_usage.input_tokens}+{loop_usage.output_tokens} tok, ${cost:.4f}")
 
-        return self._parse_json(raw)
+        result = self._parse_json(raw)
+        self._emit({
+            "type": "agent_done",
+            "agent": self.agent_id,
+            "tokens": {"input": loop_usage.input_tokens, "output": loop_usage.output_tokens},
+            "cost": cost,
+            "result": result,
+        })
+        return result
 
     @staticmethod
     def _parse_json(text: str) -> dict:

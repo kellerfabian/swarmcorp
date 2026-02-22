@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwarmCorp Dashboard</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242736;
+    --border: #2e3148;
+    --text: #e4e4e7;
+    --text-dim: #8b8fa3;
+    --accent: #6366f1;
+    --accent-glow: rgba(99, 102, 241, 0.15);
+    --ceo: #f59e0b;
+    --marketing: #ec4899;
+    --developer: #10b981;
+    --customer: #3b82f6;
+    --success: #22c55e;
+    --warning: #f59e0b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-rows: 56px 1fr auto;
+    height: 100vh;
+  }
+
+  /* ── Header ───────────────────────────────── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 10;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .logo span { font-size: 24px; }
+
+  .company-name {
+    color: var(--text-dim);
+    font-weight: 400;
+    font-size: 14px;
+    margin-left: 12px;
+    padding-left: 12px;
+    border-left: 1px solid var(--border);
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-dim);
+  }
+
+  .status-dot.running {
+    background: var(--success);
+    animation: pulse 1.5s infinite;
+  }
+
+  .status-dot.complete { background: var(--accent); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ── Main Content ─────────────────────────── */
+  .content {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    overflow: hidden;
+  }
+
+  /* ── Agent Sidebar ────────────────────────── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+  }
+
+  .sidebar-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .agent-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .agent-card.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+
+  .agent-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .agent-name {
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .agent-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .agent-icon.ceo { background: var(--ceo); }
+  .agent-icon.marketing { background: var(--marketing); }
+  .agent-icon.developer { background: var(--developer); }
+  .agent-icon.customer { background: var(--customer); }
+
+  .agent-status {
+    font-size: 11px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .agent-status .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-dim);
+  }
+
+  .agent-status .dot.thinking {
+    background: var(--warning);
+    animation: pulse 1s infinite;
+  }
+
+  .agent-status .dot.done { background: var(--success); }
+  .agent-status .dot.searching { background: var(--customer); animation: pulse 0.7s infinite; }
+
+  .agent-stats {
+    font-size: 11px;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* Thinking animation */
+  .thinking-dots::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+  }
+
+  @keyframes dots {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75% { content: '...'; }
+  }
+
+  /* ── Timeline ─────────────────────────────── */
+  .timeline-container {
+    overflow-y: auto;
+    padding: 20px 24px;
+    scroll-behavior: smooth;
+  }
+
+  .timeline {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .timeline-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-dim);
+    gap: 12px;
+    font-size: 14px;
+  }
+
+  .timeline-empty .icon { font-size: 48px; opacity: 0.3; }
+
+  .event-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    animation: slideIn 0.3s ease-out;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .event-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  .event-header:hover { background: var(--surface2); }
+
+  .event-agent-badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #fff;
+  }
+
+  .event-agent-badge.ceo { background: var(--ceo); }
+  .event-agent-badge.marketing { background: var(--marketing); }
+  .event-agent-badge.developer { background: var(--developer); }
+  .event-agent-badge.customer { background: var(--customer); }
+
+  .event-role {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .event-tokens {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+  }
+
+  .event-cost {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+  }
+
+  .event-body {
+    padding: 0 16px 14px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+  }
+
+  .event-body.expanded {
+    max-height: 600px;
+    overflow-y: auto;
+    padding: 14px 16px;
+  }
+
+  .event-body pre {
+    font-size: 12px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    color: var(--text-dim);
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.6;
+  }
+
+  .event-body .key { color: var(--accent); }
+  .event-body .string { color: var(--success); }
+  .event-body .number { color: var(--warning); }
+  .event-body .bool { color: var(--marketing); }
+
+  /* Phase separator */
+  .phase-separator {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+  }
+
+  .phase-separator::before,
+  .phase-separator::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .phase-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  /* Thinking card */
+  .thinking-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--warning);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideIn 0.3s ease-out;
+  }
+
+  .thinking-card .spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border);
+    border-top-color: var(--warning);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .thinking-card .text {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  /* ── Footer ───────────────────────────────── */
+  footer {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    font-size: 13px;
+    z-index: 10;
+  }
+
+  .footer-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .footer-label {
+    color: var(--text-dim);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .footer-value {
+    font-weight: 600;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+  }
+
+  /* Satisfaction bar */
+  .satisfaction-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    max-width: 300px;
+  }
+
+  .satisfaction-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .satisfaction-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease, background 0.3s;
+    background: var(--accent);
+  }
+
+  .satisfaction-target {
+    position: absolute;
+    top: -3px;
+    height: 14px;
+    width: 2px;
+    background: var(--warning);
+    border-radius: 1px;
+  }
+
+  .satisfaction-value {
+    font-weight: 700;
+    min-width: 40px;
+    text-align: right;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+  }
+
+  /* Score history mini-chart */
+  .score-history {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 28px;
+  }
+
+  .score-bar {
+    width: 14px;
+    border-radius: 2px 2px 0 0;
+    background: var(--accent);
+    transition: height 0.3s ease;
+    min-height: 2px;
+  }
+
+  /* Connection status */
+  .connection {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .connection .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .connection .dot.connected { background: var(--success); }
+  .connection .dot.disconnected { background: #ef4444; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <!-- Header -->
+  <header>
+    <div style="display:flex;align-items:center">
+      <div class="logo"><span>&#x1f41d;</span> SwarmCorp</div>
+      <div class="company-name" id="companyName">Waiting for simulation...</div>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Connecting...</span>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <div class="content">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-title">Agents</div>
+
+      <div class="agent-card" id="card-ceo">
+        <div class="agent-card-header">
+          <div class="agent-name"><div class="agent-icon ceo">C</div> CEO</div>
+          <div class="agent-status" id="status-ceo"><div class="dot"></div> <span>Idle</span></div>
+        </div>
+        <div class="agent-stats"><span id="tokens-ceo">0 tok</span> <span id="cost-ceo">$0.00</span></div>
+      </div>
+
+      <div class="agent-card" id="card-marketing">
+        <div class="agent-card-header">
+          <div class="agent-name"><div class="agent-icon marketing">M</div> Marketing</div>
+          <div class="agent-status" id="status-marketing"><div class="dot"></div> <span>Idle</span></div>
+        </div>
+        <div class="agent-stats"><span id="tokens-marketing">0 tok</span> <span id="cost-marketing">$0.00</span></div>
+      </div>
+
+      <div class="agent-card" id="card-developer">
+        <div class="agent-card-header">
+          <div class="agent-name"><div class="agent-icon developer">D</div> Developer</div>
+          <div class="agent-status" id="status-developer"><div class="dot"></div> <span>Idle</span></div>
+        </div>
+        <div class="agent-stats"><span id="tokens-developer">0 tok</span> <span id="cost-developer">$0.00</span></div>
+      </div>
+
+      <div class="agent-card" id="card-customer">
+        <div class="agent-card-header">
+          <div class="agent-name"><div class="agent-icon customer">K</div> Customer</div>
+          <div class="agent-status" id="status-customer"><div class="dot"></div> <span>Idle</span></div>
+        </div>
+        <div class="agent-stats"><span id="tokens-customer">0 tok</span> <span id="cost-customer">$0.00</span></div>
+      </div>
+
+      <!-- Score History -->
+      <div class="sidebar-title" style="margin-top:12px">Satisfaction History</div>
+      <div class="score-history" id="scoreHistory"></div>
+    </aside>
+
+    <!-- Timeline -->
+    <main class="timeline-container" id="timelineContainer">
+      <div class="timeline" id="timeline">
+        <div class="timeline-empty" id="emptyState">
+          <div class="icon">&#x1f41d;</div>
+          <div>Waiting for simulation to start...</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-item">
+      <span class="footer-label">Phase</span>
+      <span class="footer-value" id="currentPhase">—</span>
+    </div>
+    <div class="footer-item">
+      <span class="footer-label">Iteration</span>
+      <span class="footer-value" id="currentIteration">0 / 5</span>
+    </div>
+    <div class="footer-item satisfaction-bar-container">
+      <span class="footer-label">Satisfaction</span>
+      <div class="satisfaction-bar">
+        <div class="satisfaction-fill" id="satisfactionFill" style="width:0%"></div>
+        <div class="satisfaction-target" id="satisfactionTarget" style="left:85%"></div>
+      </div>
+      <span class="satisfaction-value" id="satisfactionValue">—</span>
+    </div>
+    <div class="footer-item">
+      <span class="footer-label">Cost</span>
+      <span class="footer-value" id="totalCost" style="color:var(--accent)">$0.0000</span>
+    </div>
+    <div class="connection">
+      <div class="dot" id="wsDot"></div>
+      <span id="wsStatus">Connecting</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const timeline = $('timeline');
+const container = $('timelineContainer');
+
+// Agent state tracking
+const agentData = {
+  ceo:       { tokens: 0, cost: 0 },
+  marketing: { tokens: 0, cost: 0 },
+  developer: { tokens: 0, cost: 0 },
+  customer:  { tokens: 0, cost: 0 },
+};
+
+const scores = [];
+let emptyRemoved = false;
+let currentThinkingEl = null;
+
+function removeEmpty() {
+  if (!emptyRemoved) {
+    const el = $('emptyState');
+    if (el) el.remove();
+    emptyRemoved = true;
+  }
+}
+
+// ── WebSocket ────────────────────────────────
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${proto}://${location.host}/ws`);
+
+  ws.onopen = () => {
+    $('wsDot').className = 'dot connected';
+    $('wsStatus').textContent = 'Connected';
+    $('statusDot').className = 'status-dot running';
+    $('statusText').textContent = 'Running';
+  };
+
+  ws.onclose = () => {
+    $('wsDot').className = 'dot disconnected';
+    $('wsStatus').textContent = 'Disconnected';
+    setTimeout(connect, 2000);
+  };
+
+  ws.onmessage = (e) => {
+    try {
+      const event = JSON.parse(e.data);
+      handleEvent(event);
+    } catch {}
+  };
+}
+
+// ── Event Handlers ───────────────────────────
+function handleEvent(ev) {
+  switch (ev.type) {
+    case 'phase_start':      onPhaseStart(ev); break;
+    case 'iteration_start':  onIterationStart(ev); break;
+    case 'agent_thinking':   onAgentThinking(ev); break;
+    case 'agent_web_search': onAgentWebSearch(ev); break;
+    case 'agent_done':       onAgentDone(ev); break;
+    case 'satisfaction_update': onSatisfaction(ev); break;
+    case 'costs_update':     onCosts(ev); break;
+    case 'simulation_complete': onComplete(ev); break;
+    case 'company_named':    onCompanyNamed(ev); break;
+  }
+}
+
+function onPhaseStart(ev) {
+  removeEmpty();
+  removeThinking();
+  $('currentPhase').textContent = `${ev.emoji || ''} ${ev.phase}`;
+
+  const sep = document.createElement('div');
+  sep.className = 'phase-separator';
+  sep.innerHTML = `<span class="phase-label">${ev.emoji || ''} ${ev.phase}</span>`;
+  timeline.appendChild(sep);
+  scrollToBottom();
+}
+
+function onIterationStart(ev) {
+  $('currentIteration').textContent = `${ev.iteration} / ${ev.max}`;
+}
+
+function onAgentThinking(ev) {
+  removeThinking();
+  const agent = ev.agent;
+  setAgentStatus(agent, 'thinking', ev.web_search ? 'Thinking + Web' : 'Thinking...');
+  $(`card-${agent}`).classList.add('active');
+
+  const el = document.createElement('div');
+  el.className = 'thinking-card';
+  el.id = 'current-thinking';
+  el.innerHTML = `
+    <div class="spinner"></div>
+    <span class="event-agent-badge ${agent}">${agent.toUpperCase()}</span>
+    <span class="text">${ev.web_search ? 'Thinking + Web Search' : 'Thinking'}...</span>
+  `;
+  timeline.appendChild(el);
+  currentThinkingEl = el;
+  scrollToBottom();
+}
+
+function onAgentWebSearch(ev) {
+  setAgentStatus(ev.agent, 'searching', 'Web Search...');
+}
+
+function onAgentDone(ev) {
+  removeThinking();
+  const agent = ev.agent;
+
+  // Update agent card
+  setAgentStatus(agent, 'done', 'Done');
+  $(`card-${agent}`).classList.remove('active');
+
+  const totalTokens = (ev.tokens?.input || 0) + (ev.tokens?.output || 0);
+  agentData[agent].tokens += totalTokens;
+  agentData[agent].cost += ev.cost || 0;
+  $(`tokens-${agent}`).textContent = `${agentData[agent].tokens.toLocaleString()} tok`;
+  $(`cost-${agent}`).textContent = `$${agentData[agent].cost.toFixed(4)}`;
+
+  // Add event card to timeline
+  const card = document.createElement('div');
+  card.className = 'event-card';
+  const result = ev.result || {};
+  const tokStr = ev.tokens ? `${ev.tokens.input.toLocaleString()}+${ev.tokens.output.toLocaleString()}` : '';
+
+  card.innerHTML = `
+    <div class="event-header" onclick="this.nextElementSibling.classList.toggle('expanded')">
+      <span class="event-agent-badge ${agent}">${agent.toUpperCase()}</span>
+      <span class="event-role">${ev.role || ''}</span>
+      <span class="event-tokens">${tokStr}</span>
+      <span class="event-cost">$${(ev.cost || 0).toFixed(4)}</span>
+    </div>
+    <div class="event-body">
+      <pre>${syntaxHighlight(result)}</pre>
+    </div>
+  `;
+  timeline.appendChild(card);
+
+  // Show key fields inline
+  const preview = buildPreview(result);
+  if (preview) {
+    const prev = document.createElement('div');
+    prev.style.cssText = 'padding: 4px 16px 12px; font-size: 12px; color: var(--text-dim);';
+    prev.innerHTML = preview;
+    card.appendChild(prev);
+  }
+
+  scrollToBottom();
+
+  // After short delay, set back to idle
+  setTimeout(() => setAgentStatus(agent, 'idle', 'Idle'), 1500);
+}
+
+function onSatisfaction(ev) {
+  const pct = Math.round((ev.score || 0) * 100);
+  $('satisfactionFill').style.width = pct + '%';
+  $('satisfactionFill').style.background = ev.score >= ev.target ? 'var(--success)' : 'var(--accent)';
+  $('satisfactionValue').textContent = (ev.score || 0).toFixed(2);
+
+  scores.push(ev.score);
+  renderScoreHistory();
+}
+
+function onCosts(ev) {
+  $('totalCost').textContent = `$${(ev.total || 0).toFixed(4)}`;
+}
+
+function onComplete(ev) {
+  $('statusDot').className = 'status-dot complete';
+  $('statusText').textContent = 'Complete';
+  $('currentPhase').textContent = 'Simulation Complete';
+
+  removeThinking();
+  removeEmpty();
+
+  const sep = document.createElement('div');
+  sep.className = 'phase-separator';
+  sep.innerHTML = '<span class="phase-label" style="color:var(--success)">&#x2705; SIMULATION COMPLETE</span>';
+  timeline.appendChild(sep);
+  scrollToBottom();
+}
+
+function onCompanyNamed(ev) {
+  $('companyName').textContent = ev.name || '';
+}
+
+// ── Helpers ──────────────────────────────────
+function setAgentStatus(agent, state, text) {
+  const el = $(`status-${agent}`);
+  if (!el) return;
+  const dot = el.querySelector('.dot');
+  const span = el.querySelector('span');
+  dot.className = `dot ${state === 'thinking' ? 'thinking' : state === 'searching' ? 'searching' : state === 'done' ? 'done' : ''}`;
+  span.textContent = text;
+}
+
+function removeThinking() {
+  if (currentThinkingEl) {
+    currentThinkingEl.remove();
+    currentThinkingEl = null;
+  }
+}
+
+function scrollToBottom() {
+  requestAnimationFrame(() => {
+    container.scrollTop = container.scrollHeight;
+  });
+}
+
+function renderScoreHistory() {
+  const el = $('scoreHistory');
+  el.innerHTML = '';
+  const maxH = 28;
+  scores.forEach(s => {
+    const bar = document.createElement('div');
+    bar.className = 'score-bar';
+    bar.style.height = Math.max(2, s * maxH) + 'px';
+    if (s >= 0.85) bar.style.background = 'var(--success)';
+    bar.title = s.toFixed(2);
+    el.appendChild(bar);
+  });
+}
+
+const PREVIEW_KEYS = [
+  'strategy_summary', 'business_model', 'decision', 'satisfaction_score',
+  'recommendation', 'overall_assessment', 'value_proposition', 'tagline',
+  'feasibility', 'target_market', 'tech_stack', 'company_name',
+  'product_name', 'would_buy', 'strengths', 'weaknesses',
+  'perspective', 'opportunities', 'risks',
+];
+
+function buildPreview(obj) {
+  if (!obj || typeof obj !== 'object') return '';
+  const lines = [];
+  for (const key of PREVIEW_KEYS) {
+    const val = deepGet(obj, key);
+    if (val != null) {
+      const display = typeof val === 'string' ? val.substring(0, 120) : JSON.stringify(val).substring(0, 120);
+      lines.push(`<span style="color:var(--accent)">${key}</span>: ${escapeHtml(display)}`);
+    }
+    if (lines.length >= 5) break;
+  }
+  return lines.join('<br>');
+}
+
+function deepGet(obj, key) {
+  if (key in obj) return obj[key];
+  for (const v of Object.values(obj)) {
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      const r = deepGet(v, key);
+      if (r != null) return r;
+    }
+  }
+  return null;
+}
+
+function syntaxHighlight(obj) {
+  const json = JSON.stringify(obj, null, 2);
+  return escapeHtml(json)
+    .replace(/"([^"]+)":/g, '<span class="key">"$1"</span>:')
+    .replace(/: "([^"]*)"/g, ': <span class="string">"$1"</span>')
+    .replace(/: (\d+\.?\d*)/g, ': <span class="number">$1</span>')
+    .replace(/: (true|false)/g, ': <span class="bool">$1</span>');
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Start
+connect();
+</script>
+</body>
+</html>

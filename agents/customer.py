@@ -6,8 +6,8 @@ from agents.base_agent import BaseAgent
 
 
 class CustomerAgent(BaseAgent):
-    def __init__(self, client: Optional[anthropic.Anthropic] = None):
-        super().__init__(agent_id="customer", client=client)
+    def __init__(self, client: Optional[anthropic.Anthropic] = None, on_event=None):
+        super().__init__(agent_id="customer", client=client, on_event=on_event)
 
     def evaluate_product(self, product: dict, marketing: dict, context: str) -> dict:
         return self.call(
