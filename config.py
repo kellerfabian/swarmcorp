@@ -23,6 +23,10 @@ MAX_ITERATIONS = 5
 TARGET_SATISFACTION = 0.85
 MAX_DEV_REVIEW_LOOPS = 3
 
+# Web Search — Anthropic built-in server tool
+WEB_SEARCH_ENABLED = True
+WEB_SEARCH_AGENTS = ["marketing", "ceo"]  # Agenten mit Web-Recherche
+
 # Paths (OpenClaw workspace pattern)
 PROJECT_ROOT = os.path.dirname(__file__)
 WORKSPACE_ROOT = os.path.join(PROJECT_ROOT, "workspace")

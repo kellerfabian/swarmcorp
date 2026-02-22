@@ -4,8 +4,9 @@
 
 Usage:
     cp .env.example .env   # API-Key eintragen
-    uv run main.py                              # Volle Simulation
+    uv run main.py --idea "Geschäftsidee"       # Simulation mit Idee
     uv run main.py --discuss "Thema"            # Schnelle Agent-Diskussion
+    uv run main.py                              # Simulation ohne Vorgabe
 """
 import sys, os, json, argparse
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -16,9 +17,12 @@ from config import ANTHROPIC_API_KEY
 
 
 def run_discussion(topic: str):
-    """All agents discuss a topic, CEO synthesizes."""
+    """All agents discuss a topic, CEO synthesizes. Persists to memory + workspace."""
     import anthropic
+    from datetime import datetime
     from agents import CEOAgent, MarketingAgent, DeveloperAgent, CustomerAgent
+    from config import MEMORY_ROOT, WORKSPACE_ROOT
+    from state import CompanyState
 
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     agents = {
@@ -27,6 +31,8 @@ def run_discussion(topic: str):
         "developer": DeveloperAgent(client=client),
         "customer": CustomerAgent(client=client),
     }
+
+    state = CompanyState(started_at=datetime.now().isoformat())
 
     print(f"\n{'='*60}\n🐝 SWARMCORP DISKUSSION: {topic}\n{'='*60}")
 
@@ -40,6 +46,7 @@ def run_discussion(topic: str):
             temperature=0.8,
         )
         perspectives[name] = result
+        state.log_message(name, "perspective", json.dumps(result, ensure_ascii=False)[:500])
         print(f"  → {str(result.get('recommendation', result.get('perspective', '')))[:150]}")
 
     print(f"\n👔 CEO Synthese...")
@@ -48,17 +55,44 @@ def run_discussion(topic: str):
         f"{json.dumps(perspectives, ensure_ascii=False, indent=2)}\n\n"
         f"Synthetisiere zu einer Entscheidung. Welche Perspektive überzeugt?",
     )
+    state.log_message("ceo", "synthesis", json.dumps(synthesis, ensure_ascii=False)[:500])
 
     print(f"\n{'='*60}\n📋 ENTSCHEIDUNG:\n{json.dumps(synthesis, ensure_ascii=False, indent=2)[:1000]}\n{'='*60}")
     total = sum(a.total_usage.cost(a.model) for a in agents.values())
     print(f"\n💰 Kosten: ${total:.4f}")
 
+    # Persist to memory + workspace
+    state.total_cost = total
+    state.strategy = synthesis
+    state.industry = topic
 
-def run_simulation():
+    # Save discussion to workspace
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    os.makedirs(WORKSPACE_ROOT, exist_ok=True)
+    discussion_file = os.path.join(WORKSPACE_ROOT, f"discussion_{timestamp}.json")
+    discussion_data = {
+        "topic": topic,
+        "timestamp": datetime.now().isoformat(),
+        "perspectives": perspectives,
+        "synthesis": synthesis,
+        "cost": total,
+    }
+    with open(discussion_file, "w", encoding="utf-8") as f:
+        json.dump(discussion_data, f, ensure_ascii=False, indent=2)
+
+    # Save state checkpoint + memory
+    state.save(os.path.join(MEMORY_ROOT, f"discussion_{timestamp}.json"))
+    state.save_memory(MEMORY_ROOT)
+
+    print(f"\n  💾 Gespeichert: {discussion_file}")
+    print(f"  💾 Memory: {MEMORY_ROOT}/")
+
+
+def run_simulation(idea: str = ""):
     """Full company simulation with feedback loops."""
     from orchestration import SwarmCorpOrchestrator
 
-    orch = SwarmCorpOrchestrator()
+    orch = SwarmCorpOrchestrator(idea=idea)
     state = orch.run()
 
     print(f"\n{'='*60}\n🎉 SIMULATION ABGESCHLOSSEN\n{'='*60}")
@@ -75,10 +109,11 @@ if __name__ == "__main__":
         sys.exit(1)
 
     parser = argparse.ArgumentParser(description="SwarmCorp")
+    parser.add_argument("--idea", type=str, help="Geschäftsidee als Startpunkt")
     parser.add_argument("--discuss", type=str, help="Schnelle Agent-Diskussion")
     args = parser.parse_args()
 
     if args.discuss:
         run_discussion(args.discuss)
     else:
-        run_simulation()
+        run_simulation(idea=args.idea or "")

@@ -12,7 +12,8 @@ class CEOAgent(BaseAgent):
     def set_initial_strategy(self, market_data: dict, context: str) -> dict:
         return self.call(
             f"Marktdaten:\n{json.dumps(market_data, ensure_ascii=False)}\n\n"
-            "Definiere eine Unternehmensstrategie. JSON mit: "
+            "Definiere eine Unternehmensstrategie. Recherchiere aktuelle "
+            "Branchenentwicklungen und validiere die Marktdaten. JSON mit: "
             "company_name, business_model, strategy_summary, target_market, "
             "competitive_advantage, tasks (Liste konkreter Aufgaben), revenue_model",
             context=context,

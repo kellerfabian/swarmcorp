@@ -12,9 +12,12 @@ from agents import CEOAgent, MarketingAgent, DeveloperAgent, CustomerAgent
 
 
 class SwarmCorpOrchestrator:
-    def __init__(self):
+    def __init__(self, idea: str = ""):
         self.client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-        self.state = CompanyState(started_at=datetime.now().isoformat())
+        self.state = CompanyState(
+            started_at=datetime.now().isoformat(),
+            industry=idea,
+        )
         self.ceo = CEOAgent(client=self.client)
         self.marketing = MarketingAgent(client=self.client)
         self.developer = DeveloperAgent(client=self.client)

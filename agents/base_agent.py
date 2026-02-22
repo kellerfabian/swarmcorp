@@ -5,7 +5,7 @@ Loads SOUL.md personality + skills, calls Claude API, returns structured JSON.
 import json, os, re
 from typing import Optional
 import anthropic
-from config import MODELS, ANTHROPIC_API_KEY, WORKSPACE_ROOT, TokenUsage
+from config import MODELS, ANTHROPIC_API_KEY, WORKSPACE_ROOT, TokenUsage, WEB_SEARCH_ENABLED, WEB_SEARCH_AGENTS
 
 
 class BaseAgent:
@@ -14,6 +14,7 @@ class BaseAgent:
         self.model = MODELS.get(agent_id, "claude-sonnet-4-5-20250929")
         self.client = client or anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
         self.total_usage = TokenUsage()
+        self.web_search = WEB_SEARCH_ENABLED and agent_id in WEB_SEARCH_AGENTS
         self.soul = self._load_file("SOUL.md")
         self.skills = self._load_skills()
 
@@ -52,22 +53,59 @@ class BaseAgent:
     def call(self, user_message: str, context: str = "", temperature: float = 0.7) -> dict:
         """Core agent loop step: context → prompt → model → parse → return."""
         system = self._build_system_prompt(context)
-        print(f"  🤖 [{self.agent_id.upper()}] Denkt nach...")
+        emoji = "🔍" if self.web_search else "🤖"
+        print(f"  {emoji} [{self.agent_id.upper()}] Denkt nach{' (+ Web Search)' if self.web_search else ''}...")
 
-        response = self.client.messages.create(
+        kwargs = dict(
             model=self.model,
             max_tokens=4096,
             temperature=temperature,
             system=system,
             messages=[{"role": "user", "content": user_message}],
         )
+        if self.web_search:
+            kwargs["tools"] = [{"type": "web_search_20250305", "name": "web_search", "max_uses": 5}]
 
-        usage = TokenUsage(response.usage.input_tokens, response.usage.output_tokens)
-        self.total_usage = self.total_usage + usage
-        cost = usage.cost(self.model)
+        response = self.client.messages.create(**kwargs)
+
+        # Agentic loop: keep going while the model wants to use tools
+        messages = kwargs["messages"][:]
+        loop_usage = TokenUsage(response.usage.input_tokens, response.usage.output_tokens)
+
+        while response.stop_reason == "tool_use" and self.web_search:
+            # Collect the assistant's content (tool_use + server_tool_use blocks)
+            messages.append({"role": "assistant", "content": response.content})
+
+            # Build tool results for any client-side tool_use blocks
+            tool_results = []
+            for block in response.content:
+                if block.type == "web_search_tool_result":
+                    print(f"    🌐 Web-Suche durchgeführt")
+                if block.type == "tool_use":
+                    tool_results.append({
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "content": "Search completed.",
+                    })
+
+            if tool_results:
+                messages.append({"role": "user", "content": tool_results})
+
+            response = self.client.messages.create(
+                model=self.model,
+                max_tokens=4096,
+                temperature=temperature,
+                system=system,
+                tools=kwargs.get("tools", []),
+                messages=messages,
+            )
+            loop_usage = loop_usage + TokenUsage(response.usage.input_tokens, response.usage.output_tokens)
+
+        self.total_usage = self.total_usage + loop_usage
+        cost = loop_usage.cost(self.model)
 
         raw = "".join(b.text for b in response.content if b.type == "text")
-        print(f"  ✅ [{self.agent_id.upper()}] {usage.input_tokens}+{usage.output_tokens} tok, ${cost:.4f}")
+        print(f"  ✅ [{self.agent_id.upper()}] {loop_usage.input_tokens}+{loop_usage.output_tokens} tok, ${cost:.4f}")
 
         return self._parse_json(raw)
 

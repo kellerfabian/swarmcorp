@@ -11,17 +11,20 @@ class MarketingAgent(BaseAgent):
 
     def research_market(self, context: str) -> dict:
         return self.call(
-            "Fuehre eine Marktrecherche durch. JSON mit: "
-            "target_market, market_size, competitors, trends, "
-            "opportunities, risks, recommendation",
+            "Fuehre eine gruendliche Marktrecherche durch. "
+            "Nutze Web-Recherche um echte, aktuelle Daten zu finden: "
+            "reale Wettbewerber, aktuelle Marktgroessen, neueste Trends. "
+            "JSON mit: target_market, market_size, competitors, trends, "
+            "opportunities, risks, recommendation, sources (Liste der genutzten Quellen-URLs)",
             context=context,
         )
 
     def develop_positioning(self, strategy: dict, context: str) -> dict:
         return self.call(
             f"Strategie:\n{json.dumps(strategy, ensure_ascii=False)}\n\n"
-            "Entwickle Marketing-Positionierung. JSON mit: "
-            "value_proposition, tagline, target_audience, channels, "
+            "Entwickle Marketing-Positionierung. Recherchiere aktuelle "
+            "Wettbewerber-Positionierungen und Marketing-Trends im Zielmarkt. "
+            "JSON mit: value_proposition, tagline, target_audience, channels, "
             "messaging, differentiation",
             context=context,
         )

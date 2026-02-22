@@ -36,6 +36,8 @@ class CompanyState:
     def get_context_summary(self) -> str:
         """Compact context for agent prompts (OpenClaw-style compaction)."""
         lines = [f"## SwarmCorp Status — Iteration {self.iteration}"]
+        if self.industry:
+            lines.append(f"- Geschäftsidee: {self.industry}")
         if self.company_name:
             lines.append(f"- Firma: {self.company_name}")
         if self.business_model:
