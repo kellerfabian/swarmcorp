@@ -9,6 +9,12 @@ Usage:
     uv run main.py                              # Simulation ohne Vorgabe
 """
 import sys, os, json, argparse
+
+# Fix Windows ProactorEventLoop assertion error in asyncio pipe transport
+if sys.platform == "win32":
+    import asyncio
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, os.path.dirname(__file__))
