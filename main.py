@@ -6,6 +6,8 @@ Usage:
     cp .env.example .env   # API-Key eintragen
     uv run main.py --idea "Geschäftsidee"       # Simulation mit Idee
     uv run main.py --discuss "Thema"            # Schnelle Agent-Diskussion
+    uv run main.py --dashboard                  # Dashboard (Idee im Browser eingeben)
+    uv run main.py --dashboard --idea "Idee"    # Dashboard mit sofortigem Start
     uv run main.py                              # Simulation ohne Vorgabe
 """
 import sys, os, json, argparse

@@ -34,7 +34,7 @@
 
   .layout {
     display: grid;
-    grid-template-rows: 56px 1fr auto;
+    grid-template-rows: 56px 1fr auto auto;
     height: 100vh;
   }
 
@@ -229,18 +229,86 @@
     gap: 16px;
   }
 
-  .timeline-empty {
+  /* ── Idea Input Screen ─────────────────────── */
+  .idea-screen {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100%;
-    color: var(--text-dim);
-    gap: 12px;
-    font-size: 14px;
+    min-height: 400px;
+    gap: 20px;
+    padding: 40px 20px;
   }
 
-  .timeline-empty .icon { font-size: 48px; opacity: 0.3; }
+  .idea-screen .icon { font-size: 56px; opacity: 0.3; }
+
+  .idea-screen h2 {
+    font-size: 24px;
+    font-weight: 300;
+    color: var(--text);
+  }
+
+  .idea-screen p {
+    color: var(--text-dim);
+    font-size: 14px;
+    text-align: center;
+    max-width: 420px;
+    line-height: 1.6;
+  }
+
+  .idea-input-group {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    max-width: 560px;
+  }
+
+  .idea-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: var(--text);
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+
+  .idea-input:focus { border-color: var(--accent); }
+  .idea-input::placeholder { color: var(--text-dim); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    font-family: inherit;
+  }
+
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+
+  .btn-secondary:hover { border-color: var(--accent); }
 
   .event-card {
     background: var(--surface);
@@ -327,6 +395,16 @@
   .event-body .number { color: var(--warning); }
   .event-body .bool { color: var(--marketing); }
 
+  .chevron {
+    margin-left: 4px;
+    font-size: 10px;
+    color: var(--text-dim);
+    transition: transform 0.2s;
+    display: inline-block;
+  }
+
+  .chevron.open { transform: rotate(180deg); }
+
   /* Phase separator */
   .phase-separator {
     display: flex;
@@ -381,6 +459,136 @@
   .thinking-card .text {
     font-size: 13px;
     color: var(--text-dim);
+  }
+
+  /* ── Chat Bubbles ──────────────────────────── */
+  .chat-bubble {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    animation: slideIn 0.3s ease-out;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .chat-bubble.user {
+    align-self: flex-end;
+    background: var(--accent);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+
+  .chat-bubble.assistant {
+    align-self: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+    color: var(--text);
+  }
+
+  .chat-meta {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    text-align: right;
+    opacity: 0.7;
+  }
+
+  .chat-bubble.user .chat-meta { color: rgba(255,255,255,0.6); }
+
+  /* ── Chat Input Bar ────────────────────────── */
+  .chat-input-bar {
+    display: none;
+    padding: 12px 24px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    gap: 12px;
+    align-items: center;
+    z-index: 10;
+  }
+
+  .chat-input-bar.visible { display: flex; }
+
+  .chat-input-bar label {
+    font-size: 13px;
+    color: var(--ceo);
+    font-weight: 600;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .chat-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+
+  .chat-input:focus { border-color: var(--accent); }
+  .chat-input::placeholder { color: var(--text-dim); }
+  .chat-input:disabled { opacity: 0.5; }
+
+  .chat-send {
+    background: var(--ceo);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    transition: opacity 0.2s;
+  }
+
+  .chat-send:hover { opacity: 0.9; }
+  .chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Session History ───────────────────────── */
+  .session-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .session-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    cursor: default;
+    transition: border-color 0.2s;
+    font-size: 12px;
+  }
+
+  .session-item.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+
+  .session-name {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .session-meta {
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
   }
 
   /* ── Footer ───────────────────────────────── */
@@ -496,7 +704,7 @@
   <header>
     <div style="display:flex;align-items:center">
       <div class="logo"><span>&#x1f41d;</span> SwarmCorp</div>
-      <div class="company-name" id="companyName">Waiting for simulation...</div>
+      <div class="company-name" id="companyName">Ready</div>
     </div>
     <div class="status-badge">
       <div class="status-dot" id="statusDot"></div>
@@ -545,24 +753,44 @@
       <!-- Score History -->
       <div class="sidebar-title" style="margin-top:12px">Satisfaction History</div>
       <div class="score-history" id="scoreHistory"></div>
+
+      <!-- Session History -->
+      <div class="sidebar-title" style="margin-top:16px">Sessions</div>
+      <div class="session-list" id="sessionHistory"></div>
     </aside>
 
     <!-- Timeline -->
     <main class="timeline-container" id="timelineContainer">
       <div class="timeline" id="timeline">
-        <div class="timeline-empty" id="emptyState">
+        <!-- Idea input screen -->
+        <div class="idea-screen" id="ideaScreen">
           <div class="icon">&#x1f41d;</div>
-          <div>Waiting for simulation to start...</div>
+          <h2>Neue Simulation starten</h2>
+          <p>Gib eine Gesch&auml;ftsidee ein und die SwarmCorp-Agenten entwickeln eine Strategie, bauen ein MVP und iterieren basierend auf Kundenfeedback.</p>
+          <div class="idea-input-group">
+            <input type="text" class="idea-input" id="ideaInput"
+                   placeholder="z.B. Eine App f&uuml;r Hundebesitzer..." autofocus>
+            <button class="btn-primary" id="ideaSubmit" onclick="submitIdea()">Start</button>
+          </div>
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Chat Input Bar (hidden until simulation completes) -->
+  <div class="chat-input-bar" id="chatInputBar">
+    <label>&#x1f4ac; CEO Chat</label>
+    <input type="text" class="chat-input" id="chatInput"
+           placeholder="Frage den CEO zu den Ergebnissen..."
+           disabled>
+    <button class="chat-send" id="chatSend" onclick="sendChat()" disabled>Senden</button>
   </div>
 
   <!-- Footer -->
   <footer>
     <div class="footer-item">
       <span class="footer-label">Phase</span>
-      <span class="footer-value" id="currentPhase">—</span>
+      <span class="footer-value" id="currentPhase">&mdash;</span>
     </div>
     <div class="footer-item">
       <span class="footer-label">Iteration</span>
@@ -574,7 +802,7 @@
         <div class="satisfaction-fill" id="satisfactionFill" style="width:0%"></div>
         <div class="satisfaction-target" id="satisfactionTarget" style="left:85%"></div>
       </div>
-      <span class="satisfaction-value" id="satisfactionValue">—</span>
+      <span class="satisfaction-value" id="satisfactionValue">&mdash;</span>
     </div>
     <div class="footer-item">
       <span class="footer-label">Cost</span>
@@ -592,7 +820,12 @@ const $ = id => document.getElementById(id);
 const timeline = $('timeline');
 const container = $('timelineContainer');
 
-// Agent state tracking
+// ── State ───────────────────────────────────
+let ws = null;
+let currentSessionId = null;
+let chatEnabled = false;
+let simulationRunning = false;
+
 const agentData = {
   ceo:       { tokens: 0, cost: 0 },
   marketing: { tokens: 0, cost: 0 },
@@ -601,12 +834,13 @@ const agentData = {
 };
 
 const scores = [];
+const sessionList = [];
 let emptyRemoved = false;
 let currentThinkingEl = null;
 
-function removeEmpty() {
+function removeIdeaScreen() {
   if (!emptyRemoved) {
-    const el = $('emptyState');
+    const el = $('ideaScreen');
     if (el) el.remove();
     emptyRemoved = true;
   }
@@ -615,18 +849,21 @@ function removeEmpty() {
 // ── WebSocket ────────────────────────────────
 function connect() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  const ws = new WebSocket(`${proto}://${location.host}/ws`);
+  ws = new WebSocket(`${proto}://${location.host}/ws`);
 
   ws.onopen = () => {
     $('wsDot').className = 'dot connected';
     $('wsStatus').textContent = 'Connected';
-    $('statusDot').className = 'status-dot running';
-    $('statusText').textContent = 'Running';
+    if (!simulationRunning) {
+      $('statusDot').className = 'status-dot';
+      $('statusText').textContent = 'Ready';
+    }
   };
 
   ws.onclose = () => {
     $('wsDot').className = 'dot disconnected';
     $('wsStatus').textContent = 'Disconnected';
+    ws = null;
     setTimeout(connect, 2000);
   };
 
@@ -638,23 +875,148 @@ function connect() {
   };
 }
 
+// ── Idea Submission ─────────────────────────
+function submitIdea() {
+  const input = $('ideaInput');
+  const idea = input.value.trim();
+  if (!idea || !ws || simulationRunning) return;
+
+  $('ideaSubmit').disabled = true;
+  simulationRunning = true;
+  ws.send(JSON.stringify({ type: 'submit_idea', idea: idea }));
+}
+
+// ── Chat ────────────────────────────────────
+function sendChat() {
+  const input = $('chatInput');
+  const message = input.value.trim();
+  if (!message || !ws || !currentSessionId || !chatEnabled) return;
+
+  // Show user bubble immediately
+  addChatBubble('user', message);
+  input.value = '';
+
+  // Disable input while waiting
+  input.disabled = true;
+  $('chatSend').disabled = true;
+
+  ws.send(JSON.stringify({
+    type: 'chat_message',
+    session_id: currentSessionId,
+    message: message,
+  }));
+}
+
+function addChatBubble(role, text, meta) {
+  const bubble = document.createElement('div');
+  bubble.className = `chat-bubble ${role}`;
+  bubble.innerHTML = escapeHtml(text).replace(/\n/g, '<br>');
+  if (meta) {
+    bubble.innerHTML += `<div class="chat-meta">${meta}</div>`;
+  }
+  timeline.appendChild(bubble);
+  scrollToBottom();
+}
+
+// ── New Simulation ──────────────────────────
+function newSimulation() {
+  currentSessionId = null;
+  chatEnabled = false;
+  simulationRunning = false;
+  emptyRemoved = false;
+
+  // Hide chat bar
+  $('chatInputBar').classList.remove('visible');
+  $('chatInput').disabled = true;
+  $('chatSend').disabled = true;
+
+  // Reset timeline
+  timeline.innerHTML = '';
+  const screen = document.createElement('div');
+  screen.className = 'idea-screen';
+  screen.id = 'ideaScreen';
+  screen.innerHTML = `
+    <div class="icon">&#x1f41d;</div>
+    <h2>Neue Simulation starten</h2>
+    <p>Gib eine Gesch&auml;ftsidee ein und die SwarmCorp-Agenten entwickeln eine Strategie, bauen ein MVP und iterieren basierend auf Kundenfeedback.</p>
+    <div class="idea-input-group">
+      <input type="text" class="idea-input" id="ideaInput"
+             placeholder="z.B. Eine App f&uuml;r Hundebesitzer..." autofocus>
+      <button class="btn-primary" id="ideaSubmit" onclick="submitIdea()">Start</button>
+    </div>
+  `;
+  timeline.appendChild(screen);
+
+  // Re-attach enter key handler
+  $('ideaInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitIdea();
+  });
+  $('ideaInput').focus();
+
+  // Reset agent cards
+  for (const a in agentData) {
+    agentData[a].tokens = 0;
+    agentData[a].cost = 0;
+    $(`tokens-${a}`).textContent = '0 tok';
+    $(`cost-${a}`).textContent = '$0.00';
+    setAgentStatus(a, 'idle', 'Idle');
+  }
+
+  // Reset footer
+  $('currentPhase').textContent = '\u2014';
+  $('currentIteration').textContent = '0 / 5';
+  $('satisfactionFill').style.width = '0%';
+  $('satisfactionValue').textContent = '\u2014';
+  $('totalCost').textContent = '$0.0000';
+  $('companyName').textContent = 'Ready';
+  $('statusDot').className = 'status-dot';
+  $('statusText').textContent = 'Ready';
+
+  // Reset scores
+  scores.length = 0;
+  renderScoreHistory();
+}
+
 // ── Event Handlers ───────────────────────────
 function handleEvent(ev) {
   switch (ev.type) {
-    case 'phase_start':      onPhaseStart(ev); break;
-    case 'iteration_start':  onIterationStart(ev); break;
-    case 'agent_thinking':   onAgentThinking(ev); break;
-    case 'agent_web_search': onAgentWebSearch(ev); break;
-    case 'agent_done':       onAgentDone(ev); break;
-    case 'satisfaction_update': onSatisfaction(ev); break;
-    case 'costs_update':     onCosts(ev); break;
+    case 'phase_start':         onPhaseStart(ev); break;
+    case 'iteration_start':     onIterationStart(ev); break;
+    case 'agent_thinking':      onAgentThinking(ev); break;
+    case 'agent_web_search':    onAgentWebSearch(ev); break;
+    case 'agent_done':          onAgentDone(ev); break;
+    case 'satisfaction_update':  onSatisfaction(ev); break;
+    case 'costs_update':        onCosts(ev); break;
     case 'simulation_complete': onComplete(ev); break;
-    case 'company_named':    onCompanyNamed(ev); break;
+    case 'company_named':       onCompanyNamed(ev); break;
+    case 'session_started':     onSessionStarted(ev); break;
+    case 'session_list':        onSessionList(ev); break;
+    case 'chat_response':       onChatResponse(ev); break;
+    case 'chat_thinking':       onChatThinking(ev); break;
+    case 'error':               onError(ev); break;
   }
 }
 
+function onSessionStarted(ev) {
+  currentSessionId = ev.session_id;
+  simulationRunning = true;
+  removeIdeaScreen();
+
+  $('statusDot').className = 'status-dot running';
+  $('statusText').textContent = 'Running';
+  $('companyName').textContent = ev.idea || 'Starting...';
+}
+
+function onSessionList(ev) {
+  // Merge server sessions into local list
+  const serverSessions = ev.sessions || [];
+  sessionList.length = 0;
+  serverSessions.forEach(s => sessionList.push(s));
+  renderSessionHistory();
+}
+
 function onPhaseStart(ev) {
-  removeEmpty();
+  removeIdeaScreen();
   removeThinking();
   $('currentPhase').textContent = `${ev.emoji || ''} ${ev.phase}`;
 
@@ -673,7 +1035,8 @@ function onAgentThinking(ev) {
   removeThinking();
   const agent = ev.agent;
   setAgentStatus(agent, 'thinking', ev.web_search ? 'Thinking + Web' : 'Thinking...');
-  $(`card-${agent}`).classList.add('active');
+  const card = $(`card-${agent}`);
+  if (card) card.classList.add('active');
 
   const el = document.createElement('div');
   el.className = 'thinking-card';
@@ -696,9 +1059,9 @@ function onAgentDone(ev) {
   removeThinking();
   const agent = ev.agent;
 
-  // Update agent card
   setAgentStatus(agent, 'done', 'Done');
-  $(`card-${agent}`).classList.remove('active');
+  const card = $(`card-${agent}`);
+  if (card) card.classList.remove('active');
 
   const totalTokens = (ev.tokens?.input || 0) + (ev.tokens?.output || 0);
   agentData[agent].tokens += totalTokens;
@@ -707,36 +1070,33 @@ function onAgentDone(ev) {
   $(`cost-${agent}`).textContent = `$${agentData[agent].cost.toFixed(4)}`;
 
   // Add event card to timeline
-  const card = document.createElement('div');
-  card.className = 'event-card';
+  const evCard = document.createElement('div');
+  evCard.className = 'event-card';
   const result = ev.result || {};
   const tokStr = ev.tokens ? `${ev.tokens.input.toLocaleString()}+${ev.tokens.output.toLocaleString()}` : '';
 
-  card.innerHTML = `
-    <div class="event-header" onclick="this.nextElementSibling.classList.toggle('expanded')">
+  const preview = buildPreview(result);
+  evCard.innerHTML = `
+    <div class="event-header" onclick="toggleEventBody(this)">
       <span class="event-agent-badge ${agent}">${agent.toUpperCase()}</span>
       <span class="event-role">${ev.role || ''}</span>
       <span class="event-tokens">${tokStr}</span>
       <span class="event-cost">$${(ev.cost || 0).toFixed(4)}</span>
+      <span class="chevron">&#9660;</span>
     </div>
+    ${preview ? `<div style="padding:10px 16px;font-size:12px;line-height:1.7;color:var(--text-dim)">${preview}</div>` : ''}
     <div class="event-body">
       <pre>${syntaxHighlight(result)}</pre>
     </div>
   `;
-  timeline.appendChild(card);
+  timeline.appendChild(evCard);
 
-  // Show key fields inline
-  const preview = buildPreview(result);
-  if (preview) {
-    const prev = document.createElement('div');
-    prev.style.cssText = 'padding: 4px 16px 12px; font-size: 12px; color: var(--text-dim);';
-    prev.innerHTML = preview;
-    card.appendChild(prev);
-  }
+  // Update running total cost in footer
+  let runningTotal = 0;
+  for (const a in agentData) runningTotal += agentData[a].cost;
+  $('totalCost').textContent = `$${runningTotal.toFixed(4)}`;
 
   scrollToBottom();
-
-  // After short delay, set back to idle
   setTimeout(() => setAgentStatus(agent, 'idle', 'Idle'), 1500);
 }
 
@@ -755,17 +1115,39 @@ function onCosts(ev) {
 }
 
 function onComplete(ev) {
+  simulationRunning = false;
+
   $('statusDot').className = 'status-dot complete';
   $('statusText').textContent = 'Complete';
-  $('currentPhase').textContent = 'Simulation Complete';
+  $('currentPhase').textContent = 'CEO Chat verf\u00fcgbar';
 
   removeThinking();
-  removeEmpty();
+  removeIdeaScreen();
 
+  // Completion separator
   const sep = document.createElement('div');
   sep.className = 'phase-separator';
   sep.innerHTML = '<span class="phase-label" style="color:var(--success)">&#x2705; SIMULATION COMPLETE</span>';
   timeline.appendChild(sep);
+
+  // New simulation button
+  const btnContainer = document.createElement('div');
+  btnContainer.style.cssText = 'text-align:center;padding:16px';
+  btnContainer.innerHTML = '<button class="btn-secondary" onclick="newSimulation()">Neue Simulation starten</button>';
+  timeline.appendChild(btnContainer);
+
+  // Enable CEO chat
+  chatEnabled = true;
+  $('chatInputBar').classList.add('visible');
+  $('chatInput').disabled = false;
+  $('chatSend').disabled = false;
+  $('chatInput').placeholder = 'Frage den CEO zu den Ergebnissen...';
+  $('chatInput').focus();
+
+  // Update session in sidebar
+  const state = ev.state || {};
+  updateSessionInList(currentSessionId, state);
+
   scrollToBottom();
 }
 
@@ -773,7 +1155,59 @@ function onCompanyNamed(ev) {
   $('companyName').textContent = ev.name || '';
 }
 
+function onChatResponse(ev) {
+  removeThinking();
+
+  const cost = ev.cost ? `$${ev.cost.toFixed(4)}` : '';
+  const tokens = ev.tokens ? `${ev.tokens.input + ev.tokens.output} tok` : '';
+  const meta = [tokens, cost].filter(Boolean).join(' \u00b7 ');
+  addChatBubble('assistant', ev.message, meta);
+
+  // Re-enable input
+  chatEnabled = true;
+  $('chatInput').disabled = false;
+  $('chatSend').disabled = false;
+  $('chatInput').focus();
+
+  // Update total cost
+  if (ev.total_cost != null) {
+    $('totalCost').textContent = `$${ev.total_cost.toFixed(4)}`;
+  }
+}
+
+function onChatThinking(ev) {
+  removeThinking();
+  const el = document.createElement('div');
+  el.className = 'thinking-card';
+  el.id = 'current-thinking';
+  el.innerHTML = `
+    <div class="spinner"></div>
+    <span class="event-agent-badge ceo">CEO</span>
+    <span class="text">Thinking...</span>
+  `;
+  timeline.appendChild(el);
+  currentThinkingEl = el;
+  scrollToBottom();
+}
+
+function onError(ev) {
+  console.error('Server error:', ev.message);
+  // Re-enable inputs on error
+  simulationRunning = false;
+  const ideaSubmit = $('ideaSubmit');
+  if (ideaSubmit) ideaSubmit.disabled = false;
+  $('chatInput').disabled = false;
+  $('chatSend').disabled = false;
+}
+
 // ── Helpers ──────────────────────────────────
+function toggleEventBody(header) {
+  const chevron = header.querySelector('.chevron');
+  const body = header.parentElement.querySelector('.event-body');
+  if (chevron) chevron.classList.toggle('open');
+  if (body) body.classList.toggle('expanded');
+}
+
 function setAgentStatus(agent, state, text) {
   const el = $(`status-${agent}`);
   if (!el) return;
@@ -810,6 +1244,52 @@ function renderScoreHistory() {
   });
 }
 
+function renderSessionHistory() {
+  const el = $('sessionHistory');
+  el.innerHTML = '';
+  sessionList.forEach(s => {
+    const item = document.createElement('div');
+    item.className = `session-item ${s.session_id === currentSessionId ? 'active' : ''}`;
+    const name = s.company_name || s.idea || 'Session';
+    const sat = s.satisfaction != null ? (s.satisfaction * 100).toFixed(0) + '%' : '\u2014';
+    const cost = `$${(s.cost || 0).toFixed(4)}`;
+    item.innerHTML = `
+      <div class="session-name">${escapeHtml(name)}</div>
+      <div class="session-meta">
+        <span>${sat}</span>
+        <span>${cost}</span>
+      </div>
+    `;
+    el.appendChild(item);
+  });
+}
+
+function updateSessionInList(sessionId, state) {
+  // Update or add session to local list
+  let found = false;
+  for (let i = 0; i < sessionList.length; i++) {
+    if (sessionList[i].session_id === sessionId) {
+      sessionList[i].company_name = state.company_name || sessionList[i].company_name;
+      sessionList[i].satisfaction = state.satisfaction;
+      sessionList[i].cost = state.total_cost || sessionList[i].cost;
+      sessionList[i].status = 'complete';
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    sessionList.push({
+      session_id: sessionId,
+      idea: '',
+      company_name: state.company_name || 'Unknown',
+      satisfaction: state.satisfaction,
+      cost: state.total_cost || 0,
+      status: 'complete',
+    });
+  }
+  renderSessionHistory();
+}
+
 const PREVIEW_KEYS = [
   'strategy_summary', 'business_model', 'decision', 'satisfaction_score',
   'recommendation', 'overall_assessment', 'value_proposition', 'tagline',
@@ -818,14 +1298,31 @@ const PREVIEW_KEYS = [
   'perspective', 'opportunities', 'risks',
 ];
 
+function formatPreviewValue(val) {
+  if (val == null) return '';
+  if (typeof val === 'string') return escapeHtml(val.substring(0, 200));
+  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+  if (Array.isArray(val)) return escapeHtml(val.map(v => typeof v === 'string' ? v : JSON.stringify(v)).join(', ').substring(0, 200));
+  if (typeof val === 'object') {
+    const parts = [];
+    for (const [k, v] of Object.entries(val)) {
+      if (typeof v === 'string') parts.push(`${k}: ${v}`);
+      else if (typeof v === 'number' || typeof v === 'boolean') parts.push(`${k}: ${v}`);
+      else if (Array.isArray(v)) parts.push(`${k}: ${v.length} items`);
+    }
+    return escapeHtml(parts.join(' | ').substring(0, 200));
+  }
+  return escapeHtml(String(val).substring(0, 200));
+}
+
 function buildPreview(obj) {
   if (!obj || typeof obj !== 'object') return '';
   const lines = [];
   for (const key of PREVIEW_KEYS) {
     const val = deepGet(obj, key);
     if (val != null) {
-      const display = typeof val === 'string' ? val.substring(0, 120) : JSON.stringify(val).substring(0, 120);
-      lines.push(`<span style="color:var(--accent)">${key}</span>: ${escapeHtml(display)}`);
+      const display = formatPreviewValue(val);
+      lines.push(`<span style="color:var(--accent)">${key}</span>: ${display}`);
     }
     if (lines.length >= 5) break;
   }
@@ -856,7 +1353,15 @@ function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-// Start
+// ── Init ────────────────────────────────────
+$('ideaInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') submitIdea();
+});
+
+$('chatInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendChat();
+});
+
 connect();
 </script>
 </body>

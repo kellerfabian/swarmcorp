@@ -119,7 +119,12 @@ class SwarmCorpOrchestrator:
         self.state.log_message("customer", "feedback", json.dumps(fb, ensure_ascii=False)[:300])
         self._preview("Customer", fb)
 
-        score = fb.get("satisfaction_score", 0)
+        score = self._deep(fb, "satisfaction_score") or 0
+        if isinstance(score, str):
+            try:
+                score = float(score)
+            except ValueError:
+                score = 0
         print(f"\n  📈 Zufriedenheit: {score}")
         self._emit({"type": "satisfaction_update", "score": score, "target": TARGET_SATISFACTION})
 
@@ -145,7 +150,7 @@ class SwarmCorpOrchestrator:
         self.state.save(os.path.join(MEMORY_ROOT, "final_state.json"))
         self.state.save_memory(MEMORY_ROOT)
         log_path = os.path.join(MEMORY_ROOT, "conversation_log.json")
-        with open(log_path, "w") as f:
+        with open(log_path, "w", encoding="utf-8") as f:
             json.dump(self.state.conversation_log, f, ensure_ascii=False, indent=2)
         print(f"\n  💾 Gespeichert: {MEMORY_ROOT}/")
 

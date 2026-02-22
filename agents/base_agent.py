@@ -124,6 +124,40 @@ class BaseAgent:
         })
         return result
 
+    def chat(self, messages: list[dict], context: str = "", temperature: float = 0.7) -> tuple[str, "TokenUsage"]:
+        """Conversational chat without JSON enforcement. Returns (text, usage)."""
+        parts = [self.soul]
+        if self.skills:
+            parts.append(f"\n## Verfügbare Skills\n{self.skills}")
+        if context:
+            parts.append(f"\n## Aktueller Firmenkontext\n{context}")
+        parts.append(
+            "\n## WICHTIG\n"
+            "Antworte in natürlicher Sprache auf Deutsch. "
+            "Du bist ein erfahrener Experte in deiner Rolle und antwortest "
+            "auf Fragen zu den Ergebnissen der Simulation."
+        )
+        system = "\n\n".join(parts)
+
+        self._emit({"type": "agent_thinking", "agent": self.agent_id, "web_search": False})
+
+        response = self.client.messages.create(
+            model=self.model,
+            max_tokens=2048,
+            temperature=temperature,
+            system=system,
+            messages=messages,
+        )
+
+        usage = TokenUsage(response.usage.input_tokens, response.usage.output_tokens)
+        self.total_usage = self.total_usage + usage
+
+        text = "".join(b.text for b in response.content if b.type == "text")
+        cost = usage.cost(self.model)
+        print(f"  💬 [{self.agent_id.upper()}] Chat: {usage.input_tokens}+{usage.output_tokens} tok, ${cost:.4f}")
+
+        return text, usage
+
     @staticmethod
     def _parse_json(text: str) -> dict:
         """Robust JSON extraction."""

@@ -36,3 +36,8 @@ class CEOAgent(BaseAgent):
             "next_steps, overall_assessment",
             context=context,
         )
+
+    def chat_about_results(self, user_message: str, chat_history: list[dict], context: str) -> tuple[str, "TokenUsage"]:
+        """Conversational follow-up about simulation results."""
+        messages = chat_history + [{"role": "user", "content": user_message}]
+        return self.chat(messages, context=context)
