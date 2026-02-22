@@ -23,6 +23,13 @@ TEMPLATE_DIR = Path(__file__).parent / "templates"
 
 sessions = SessionManager()
 
+# Load previously archived sessions so they show in sidebar on startup
+try:
+    from config import ARCHIVE_ROOT as _archive_root
+    sessions.load_archived_sessions(_archive_root)
+except Exception:
+    pass
+
 
 class EventBridge:
     """Bridges sync orchestrator events → async WebSocket broadcasts."""
@@ -167,6 +174,13 @@ def _run_session_simulation(session):
         session.ceo_agent = orch.ceo
         session.total_cost = state.total_cost
         session.status = "complete"
+
+        # Archive completed session to disk
+        try:
+            from config import ARCHIVE_ROOT
+            sessions.archive_session(session.session_id, ARCHIVE_ROOT)
+        except Exception as e:
+            print(f"  Warning: Archive failed: {e}")
 
         # Broadcast updated session list
         bridge.emit({

@@ -95,3 +95,52 @@ class CompanyState:
         content += f"- Entscheidung: {self.strategy.get('decision', 'N/A')}\n\n"
         with open(path, "a", encoding="utf-8") as f:
             f.write(content)
+
+    def generate_summary(self) -> str:
+        """Generate a human-readable markdown summary for archival."""
+        lines = [
+            f"# SwarmCorp Simulation Report",
+            f"",
+            f"**Firma:** {self.company_name}",
+            f"**Branche:** {self.industry}",
+            f"**Geschäftsmodell:** {self.business_model}",
+            f"**Gestartet:** {self.started_at}",
+            f"**Letztes Update:** {self.last_updated}",
+            f"**Iterationen:** {self.iteration}",
+            f"**Gesamtkosten:** ${self.total_cost:.4f}",
+            f"",
+        ]
+
+        if self.strategy:
+            summary = self.strategy.get("strategy_summary", "")
+            if isinstance(summary, dict):
+                summary = json.dumps(summary, ensure_ascii=False)[:500]
+            elif isinstance(summary, str):
+                summary = summary[:500]
+            lines.append(f"## Strategie")
+            lines.append(f"{summary}")
+            lines.append("")
+
+        if self.feedback_history:
+            lines.append(f"## Zufriedenheitsverlauf")
+            for i, fb in enumerate(self.feedback_history, 1):
+                score = fb.get("satisfaction_score", "?")
+                assessment = fb.get("overall_assessment", "")[:200]
+                lines.append(f"- **Iteration {i}:** Score {score} — {assessment}")
+            lines.append("")
+
+        if self.marketing:
+            vp = self.marketing.get("value_proposition", "")
+            if vp:
+                lines.append(f"## Marketing")
+                lines.append(f"**Value Proposition:** {str(vp)[:300]}")
+                lines.append("")
+
+        if self.products:
+            lines.append(f"## Produkte")
+            for i, prod in enumerate(self.products, 1):
+                name = prod.get("product_name", prod.get("name", f"Produkt {i}"))
+                lines.append(f"- **{name}:** {json.dumps(prod, ensure_ascii=False)[:200]}")
+            lines.append("")
+
+        return "\n".join(lines)

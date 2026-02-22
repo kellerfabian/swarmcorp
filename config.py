@@ -12,9 +12,9 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 
 # Model routing per agent role
 MODELS = {
-    "ceo":       "claude-sonnet-4-5-20250929",
-    "marketing": "claude-sonnet-4-5-20250929",
-    "developer": "claude-sonnet-4-5-20250929",
+    "ceo":       "claude-sonnet-4-6",
+    "marketing": "claude-sonnet-4-6",
+    "developer": "claude-sonnet-4-6",
     "customer":  "claude-haiku-4-5-20251001",
 }
 
@@ -35,10 +35,11 @@ DASHBOARD_PORT = 8050
 PROJECT_ROOT = os.path.dirname(__file__)
 WORKSPACE_ROOT = os.path.join(PROJECT_ROOT, "workspace")
 MEMORY_ROOT = os.path.join(PROJECT_ROOT, "memory")
+ARCHIVE_ROOT = os.path.join(MEMORY_ROOT, "archive")
 
 # Pricing per 1M tokens
 PRICING = {
-    "claude-sonnet-4-5-20250929": {"input": 3.0, "output": 15.0},
+    "claude-sonnet-4-6": {"input": 3.0, "output": 15.0},
     "claude-haiku-4-5-20251001":  {"input": 1.0, "output": 5.0},
 }
 

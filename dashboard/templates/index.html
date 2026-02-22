@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SwarmCorp Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
   :root {
     --bg: #0f1117;
@@ -486,6 +487,61 @@
     border: 1px solid var(--border);
     border-bottom-left-radius: 4px;
     color: var(--text);
+    white-space: normal;
+  }
+
+  .chat-bubble.assistant h1,
+  .chat-bubble.assistant h2,
+  .chat-bubble.assistant h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 12px 0 6px;
+    color: var(--text);
+  }
+
+  .chat-bubble.assistant h1:first-child,
+  .chat-bubble.assistant h2:first-child,
+  .chat-bubble.assistant h3:first-child { margin-top: 0; }
+
+  .chat-bubble.assistant p { margin: 6px 0; }
+
+  .chat-bubble.assistant ul, .chat-bubble.assistant ol {
+    margin: 6px 0;
+    padding-left: 20px;
+  }
+
+  .chat-bubble.assistant li { margin: 3px 0; }
+
+  .chat-bubble.assistant code {
+    background: var(--surface2);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 13px;
+  }
+
+  .chat-bubble.assistant pre {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    overflow-x: auto;
+    margin: 8px 0;
+  }
+
+  .chat-bubble.assistant pre code {
+    background: none;
+    padding: 0;
+  }
+
+  .chat-bubble.assistant strong { color: var(--text); }
+  .chat-bubble.assistant em { color: var(--text-dim); }
+
+  .chat-bubble.assistant blockquote {
+    border-left: 3px solid var(--accent);
+    padding-left: 12px;
+    margin: 8px 0;
+    color: var(--text-dim);
   }
 
   .chat-meta {
@@ -575,6 +631,13 @@
     border-color: var(--accent);
     box-shadow: 0 0 8px var(--accent-glow);
   }
+
+  .session-item.archived {
+    opacity: 0.65;
+    border-left: 3px solid var(--text-dim);
+  }
+
+  .session-item.archived:hover { opacity: 0.8; }
 
   .session-name {
     font-weight: 600;
@@ -910,7 +973,11 @@ function sendChat() {
 function addChatBubble(role, text, meta) {
   const bubble = document.createElement('div');
   bubble.className = `chat-bubble ${role}`;
-  bubble.innerHTML = escapeHtml(text).replace(/\n/g, '<br>');
+  if (role === 'assistant' && typeof marked !== 'undefined') {
+    bubble.innerHTML = marked.parse(text);
+  } else {
+    bubble.innerHTML = escapeHtml(text).replace(/\n/g, '<br>');
+  }
   if (meta) {
     bubble.innerHTML += `<div class="chat-meta">${meta}</div>`;
   }
@@ -1247,21 +1314,38 @@ function renderScoreHistory() {
 function renderSessionHistory() {
   const el = $('sessionHistory');
   el.innerHTML = '';
-  sessionList.forEach(s => {
-    const item = document.createElement('div');
-    item.className = `session-item ${s.session_id === currentSessionId ? 'active' : ''}`;
-    const name = s.company_name || s.idea || 'Session';
-    const sat = s.satisfaction != null ? (s.satisfaction * 100).toFixed(0) + '%' : '\u2014';
-    const cost = `$${(s.cost || 0).toFixed(4)}`;
-    item.innerHTML = `
-      <div class="session-name">${escapeHtml(name)}</div>
-      <div class="session-meta">
-        <span>${sat}</span>
-        <span>${cost}</span>
-      </div>
-    `;
-    el.appendChild(item);
-  });
+
+  const active = sessionList.filter(s => s.status !== 'archived');
+  const archived = sessionList.filter(s => s.status === 'archived');
+
+  active.forEach(s => el.appendChild(createSessionItem(s)));
+
+  if (archived.length > 0) {
+    const divider = document.createElement('div');
+    divider.className = 'sidebar-title';
+    divider.style.marginTop = '8px';
+    divider.textContent = 'Archive';
+    el.appendChild(divider);
+    archived.forEach(s => el.appendChild(createSessionItem(s)));
+  }
+}
+
+function createSessionItem(s) {
+  const item = document.createElement('div');
+  const isArchived = s.status === 'archived';
+  const isActive = s.session_id === currentSessionId;
+  item.className = `session-item${isActive ? ' active' : ''}${isArchived ? ' archived' : ''}`;
+  const name = s.company_name || s.idea || 'Session';
+  const sat = s.satisfaction != null ? (s.satisfaction * 100).toFixed(0) + '%' : '\u2014';
+  const cost = `$${(s.cost || 0).toFixed(4)}`;
+  item.innerHTML = `
+    <div class="session-name">${escapeHtml(name)}</div>
+    <div class="session-meta">
+      <span>${sat}</span>
+      <span>${cost}</span>
+    </div>
+  `;
+  return item;
 }
 
 function updateSessionInList(sessionId, state) {
