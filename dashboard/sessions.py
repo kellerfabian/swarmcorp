@@ -92,6 +92,7 @@ class SessionManager:
 
         # 1. Full state
         state.save(os.path.join(archive_dir, "state.json"))
+        print(f"     💾 state.json")
 
         # 2. Conversation log
         log_path = os.path.join(archive_dir, "conversation_log.json")
@@ -100,11 +101,13 @@ class SessionManager:
                 getattr(state, "conversation_log", []),
                 f, ensure_ascii=False, indent=2,
             )
+        print(f"     💾 conversation_log.json ({len(getattr(state, 'conversation_log', []))} Einträge)")
 
         # 3. Human-readable summary
         summary_path = os.path.join(archive_dir, "summary.md")
         with open(summary_path, "w", encoding="utf-8") as f:
             f.write(state.generate_summary())
+        print(f"     💾 summary.md")
 
         # 4. Lightweight metadata for fast sidebar loading
         fb = getattr(state, "feedback_history", [])
@@ -121,6 +124,8 @@ class SessionManager:
         meta_path = os.path.join(archive_dir, "session_meta.json")
         with open(meta_path, "w", encoding="utf-8") as f:
             json.dump(meta, f, ensure_ascii=False, indent=2)
+        print(f"     💾 session_meta.json")
+        print(f"     📁 Archiv: {archive_dir}")
 
     def load_archived_sessions(self, archive_root: str):
         """Scan archive directory and load session metadata for sidebar."""

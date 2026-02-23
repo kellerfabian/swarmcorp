@@ -6,11 +6,18 @@ Supports multiple simulation sessions and post-simulation CEO chat.
 import asyncio
 import json
 import os
+import sys
 import threading
 import time
 import webbrowser
 from pathlib import Path
 from typing import Optional
+
+# Ensure UTF-8 output on Windows (module-level prints use emojis)
+if sys.platform == "win32":
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
@@ -27,8 +34,14 @@ sessions = SessionManager()
 try:
     from config import ARCHIVE_ROOT as _archive_root
     sessions.load_archived_sessions(_archive_root)
-except Exception:
-    pass
+    if sessions.archived_sessions:
+        print(f"  📂 {len(sessions.archived_sessions)} archivierte Session(s) geladen aus {_archive_root}")
+        for a in sessions.archived_sessions:
+            print(f"     ↳ {a.get('company_name') or a.get('idea', '?')} (Score: {a.get('satisfaction', '—')}, ${a.get('cost', 0):.4f})")
+    else:
+        print(f"  📂 Kein Archiv gefunden (wird erstellt nach erster Simulation)")
+except Exception as e:
+    print(f"  ⚠️  Archiv laden fehlgeschlagen: {e}")
 
 
 class EventBridge:
@@ -57,10 +70,14 @@ class EventBridge:
     async def connect(self, ws: WebSocket):
         await ws.accept()
         self.clients.append(ws)
+        session_list = sessions.list_sessions()
+        active = [s for s in session_list if s["status"] != "archived"]
+        archived = [s for s in session_list if s["status"] == "archived"]
+        print(f"  🔌 WebSocket verbunden ({len(self.clients)} Client(s)) — {len(active)} aktiv, {len(archived)} archiviert")
         # Send session list
         await ws.send_text(json.dumps({
             "type": "session_list",
-            "sessions": sessions.list_sessions(),
+            "sessions": session_list,
         }, ensure_ascii=False, default=str))
         # Replay active session events
         if sessions.active_session_id:
@@ -75,6 +92,7 @@ class EventBridge:
     def disconnect(self, ws: WebSocket):
         if ws in self.clients:
             self.clients.remove(ws)
+            print(f"  🔌 WebSocket getrennt ({len(self.clients)} Client(s) verbleibend)")
 
 
 bridge = EventBridge()
@@ -121,6 +139,8 @@ def _handle_submit_idea(msg: dict):
 
     session = sessions.create_session(idea)
     sessions.active_session_id = session.session_id
+    print(f"\n  🆕 Session erstellt: {session.session_id}")
+    print(f"     Idee: {idea}")
 
     bridge.emit({
         "type": "session_started",
@@ -178,9 +198,11 @@ def _run_session_simulation(session):
         # Archive completed session to disk
         try:
             from config import ARCHIVE_ROOT
+            print(f"\n  📦 Archiviere Session {session.session_id}...")
             sessions.archive_session(session.session_id, ARCHIVE_ROOT)
+            print(f"  ✅ Archiv gespeichert: {ARCHIVE_ROOT}/{session.session_id}_*/")
         except Exception as e:
-            print(f"  Warning: Archive failed: {e}")
+            print(f"  ⚠️  Archiv fehlgeschlagen: {e}")
 
         # Broadcast updated session list
         bridge.emit({
