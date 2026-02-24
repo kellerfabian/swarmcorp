@@ -12,16 +12,10 @@ Usage:
 """
 import sys, os, json, argparse
 
-# Fix Windows ProactorEventLoop assertion error in asyncio pipe transport
-if sys.platform == "win32":
-    import asyncio
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, os.path.dirname(__file__))
 
-from config import ANTHROPIC_API_KEY
+# config.py handles: Windows asyncio fix + UTF-8 output
+from config import ANTHROPIC_API_KEY, log
 
 
 def run_discussion(topic: str):
@@ -42,11 +36,11 @@ def run_discussion(topic: str):
 
     state = CompanyState(started_at=datetime.now().isoformat())
 
-    print(f"\n{'='*60}\n🐝 SWARMCORP DISKUSSION: {topic}\n{'='*60}")
+    log(f"\n{'='*60}\n🐝 SWARMCORP DISKUSSION: {topic}\n{'='*60}")
 
     perspectives = {}
     for name, agent in agents.items():
-        print(f"\n🎙️  {name.upper()}...")
+        log(f"\n🎙️  {name.upper()}...")
         result = agent.call(
             f"Thema: {topic}\n\n"
             f"Deine Einschätzung als {name}: Chancen, Risiken, Empfehlung. "
@@ -55,9 +49,9 @@ def run_discussion(topic: str):
         )
         perspectives[name] = result
         state.log_message(name, "perspective", json.dumps(result, ensure_ascii=False)[:500])
-        print(f"  → {str(result.get('recommendation', result.get('perspective', '')))[:150]}")
+        log(f"  → {str(result.get('recommendation', result.get('perspective', '')))[:150]}")
 
-    print(f"\n👔 CEO Synthese...")
+    log(f"\n👔 CEO Synthese...")
     synthesis = agents["ceo"].call(
         f"Team-Perspektiven zu '{topic}':\n"
         f"{json.dumps(perspectives, ensure_ascii=False, indent=2)}\n\n"
@@ -65,9 +59,9 @@ def run_discussion(topic: str):
     )
     state.log_message("ceo", "synthesis", json.dumps(synthesis, ensure_ascii=False)[:500])
 
-    print(f"\n{'='*60}\n📋 ENTSCHEIDUNG:\n{json.dumps(synthesis, ensure_ascii=False, indent=2)[:1000]}\n{'='*60}")
+    log(f"\n{'='*60}\n📋 ENTSCHEIDUNG:\n{json.dumps(synthesis, ensure_ascii=False, indent=2)[:1000]}\n{'='*60}")
     total = sum(a.total_usage.cost(a.model) for a in agents.values())
-    print(f"\n💰 Kosten: ${total:.4f}")
+    log(f"\n💰 Kosten: ${total:.4f}")
 
     # Persist to memory + workspace
     state.total_cost = total
@@ -92,8 +86,8 @@ def run_discussion(topic: str):
     state.save(os.path.join(MEMORY_ROOT, f"discussion_{timestamp}.json"))
     state.save_memory(MEMORY_ROOT)
 
-    print(f"\n  💾 Gespeichert: {discussion_file}")
-    print(f"  💾 Memory: {MEMORY_ROOT}/")
+    log(f"\n  💾 Gespeichert: {discussion_file}")
+    log(f"  💾 Memory: {MEMORY_ROOT}/")
 
 
 def run_simulation(idea: str = ""):
@@ -103,12 +97,12 @@ def run_simulation(idea: str = ""):
     orch = SwarmCorpOrchestrator(idea=idea)
     state = orch.run()
 
-    print(f"\n{'='*60}\n🎉 SIMULATION ABGESCHLOSSEN\n{'='*60}")
-    print(f"  Firma: {state.company_name}")
-    print(f"  Iterationen: {state.iteration}")
+    log(f"\n{'='*60}\n🎉 SIMULATION ABGESCHLOSSEN\n{'='*60}")
+    log(f"  Firma: {state.company_name}")
+    log(f"  Iterationen: {state.iteration}")
     if state.feedback_history:
-        print(f"  Finale Zufriedenheit: {state.feedback_history[-1].get('satisfaction_score', '?')}")
-    print(f"  Kosten: ${state.total_cost:.4f}")
+        log(f"  Finale Zufriedenheit: {state.feedback_history[-1].get('satisfaction_score', '?')}")
+    log(f"  Kosten: ${state.total_cost:.4f}")
 
 
 if __name__ == "__main__":

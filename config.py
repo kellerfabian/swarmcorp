@@ -2,13 +2,20 @@
 SwarmCorp — Configuration
 Multi-Agent KI-Firma Simulation
 """
-import os
+import os, sys
 from dataclasses import dataclass
+from datetime import datetime
 from dotenv import load_dotenv
+
+# Fix Windows ProactorEventLoop assertion error (must run before any event loop)
+if sys.platform == "win32":
+    import asyncio
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 load_dotenv()
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+DEBUG = os.environ.get("DEBUG", "false").lower() in ("true", "1", "yes")
 
 # Model routing per agent role
 MODELS = {
@@ -58,3 +65,16 @@ class TokenUsage:
             self.input_tokens + other.input_tokens,
             self.output_tokens + other.output_tokens,
         )
+
+
+# Ensure UTF-8 output on Windows for all log() calls
+if sys.platform == "win32":
+    for _stream in (sys.stdout, sys.stderr):
+        if hasattr(_stream, "reconfigure") and getattr(_stream, "encoding", "") != "utf-8":
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+
+
+def log(*args, **kwargs):
+    """Print with HH:MM:SS timestamp prefix."""
+    ts = datetime.now().strftime("%H:%M:%S")
+    print(f"[{ts}]", *args, **kwargs)

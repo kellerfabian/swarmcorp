@@ -6,7 +6,7 @@ import json, os
 from datetime import datetime
 import anthropic
 
-from config import ANTHROPIC_API_KEY, MAX_ITERATIONS, TARGET_SATISFACTION, MEMORY_ROOT, TokenUsage
+from config import ANTHROPIC_API_KEY, MAX_ITERATIONS, TARGET_SATISFACTION, MEMORY_ROOT, TokenUsage, log
 from state import CompanyState
 from agents import CEOAgent, MarketingAgent, DeveloperAgent, CustomerAgent
 
@@ -125,11 +125,11 @@ class SwarmCorpOrchestrator:
                 score = float(score)
             except ValueError:
                 score = 0
-        print(f"\n  📈 Zufriedenheit: {score}")
+        log(f"\n  📈 Zufriedenheit: {score}")
         self._emit({"type": "satisfaction_update", "score": score, "target": TARGET_SATISFACTION})
 
         if score >= TARGET_SATISFACTION:
-            print(f"  ✅ Ziel erreicht! (≥ {TARGET_SATISFACTION})")
+            log(f"  ✅ Ziel erreicht! (≥ {TARGET_SATISFACTION})")
             return "ship"
 
         # CEO Review
@@ -152,7 +152,7 @@ class SwarmCorpOrchestrator:
         log_path = os.path.join(MEMORY_ROOT, "conversation_log.json")
         with open(log_path, "w", encoding="utf-8") as f:
             json.dump(self.state.conversation_log, f, ensure_ascii=False, indent=2)
-        print(f"\n  💾 Gespeichert: {MEMORY_ROOT}/")
+        log(f"\n  💾 Gespeichert: {MEMORY_ROOT}/")
 
     def _costs(self):
         self._header("KOSTEN")
@@ -162,9 +162,9 @@ class SwarmCorpOrchestrator:
             c = a.total_usage.cost(a.model)
             total += c
             agent_costs[a.agent_id] = c
-            print(f"  {a.agent_id:12s} {a.total_usage.input_tokens:>8,} in + {a.total_usage.output_tokens:>8,} out = ${c:.4f}")
-        print(f"  {'─'*50}")
-        print(f"  {'TOTAL':12s} ${total:.4f}")
+            log(f"  {a.agent_id:12s} {a.total_usage.input_tokens:>8,} in + {a.total_usage.output_tokens:>8,} out = ${c:.4f}")
+        log(f"  {'─'*50}")
+        log(f"  {'TOTAL':12s} ${total:.4f}")
         self._emit({"type": "costs_update", "agents": agent_costs, "total": total})
 
     def _preview(self, agent: str, data: dict):
@@ -177,9 +177,9 @@ class SwarmCorpOrchestrator:
             if v is not None:
                 lines.append(f"    {k}: {str(v)[:120]}")
         if lines:
-            print(f"\n  📄 [{agent}]")
+            log(f"\n  📄 [{agent}]")
             for l in lines[:5]:
-                print(l)
+                log(l)
 
     def _deep(self, d: dict, key: str):
         if key in d:
@@ -193,8 +193,8 @@ class SwarmCorpOrchestrator:
 
     @staticmethod
     def _header(text: str):
-        print(f"\n{'='*60}\n🐝 {text}\n{'='*60}")
+        log(f"\n{'='*60}\n🐝 {text}\n{'='*60}")
 
     @staticmethod
     def _phase(text: str, emoji: str = ""):
-        print(f"\n{emoji} {text}...")
+        log(f"\n{emoji} {text}...")

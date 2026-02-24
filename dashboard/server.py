@@ -6,22 +6,16 @@ Supports multiple simulation sessions and post-simulation CEO chat.
 import asyncio
 import json
 import os
-import sys
 import threading
 import time
 import webbrowser
 from pathlib import Path
 from typing import Optional
 
-# Ensure UTF-8 output on Windows (module-level prints use emojis)
-if sys.platform == "win32":
-    for stream in (sys.stdout, sys.stderr):
-        if hasattr(stream, "reconfigure"):
-            stream.reconfigure(encoding="utf-8", errors="replace")
-
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 
+from config import log
 from dashboard.sessions import SessionManager
 
 app = FastAPI(title="SwarmCorp Dashboard")
@@ -35,13 +29,13 @@ try:
     from config import ARCHIVE_ROOT as _archive_root
     sessions.load_archived_sessions(_archive_root)
     if sessions.archived_sessions:
-        print(f"  📂 {len(sessions.archived_sessions)} archivierte Session(s) geladen aus {_archive_root}")
+        log(f"  📂 {len(sessions.archived_sessions)} archivierte Session(s) geladen aus {_archive_root}")
         for a in sessions.archived_sessions:
-            print(f"     ↳ {a.get('company_name') or a.get('idea', '?')} (Score: {a.get('satisfaction', '—')}, ${a.get('cost', 0):.4f})")
+            log(f"     ↳ {a.get('company_name') or a.get('idea', '?')} (Score: {a.get('satisfaction', '—')}, ${a.get('cost', 0):.4f})")
     else:
-        print(f"  📂 Kein Archiv gefunden (wird erstellt nach erster Simulation)")
+        log(f"  📂 Kein Archiv gefunden (wird erstellt nach erster Simulation)")
 except Exception as e:
-    print(f"  ⚠️  Archiv laden fehlgeschlagen: {e}")
+    log(f"  ⚠️  Archiv laden fehlgeschlagen: {e}")
 
 
 class EventBridge:
@@ -73,7 +67,7 @@ class EventBridge:
         session_list = sessions.list_sessions()
         active = [s for s in session_list if s["status"] != "archived"]
         archived = [s for s in session_list if s["status"] == "archived"]
-        print(f"  🔌 WebSocket verbunden ({len(self.clients)} Client(s)) — {len(active)} aktiv, {len(archived)} archiviert")
+        log(f"  🔌 WebSocket verbunden ({len(self.clients)} Client(s)) — {len(active)} aktiv, {len(archived)} archiviert")
         # Send session list
         await ws.send_text(json.dumps({
             "type": "session_list",
@@ -92,7 +86,7 @@ class EventBridge:
     def disconnect(self, ws: WebSocket):
         if ws in self.clients:
             self.clients.remove(ws)
-            print(f"  🔌 WebSocket getrennt ({len(self.clients)} Client(s) verbleibend)")
+            log(f"  🔌 WebSocket getrennt ({len(self.clients)} Client(s) verbleibend)")
 
 
 bridge = EventBridge()
@@ -139,8 +133,8 @@ def _handle_submit_idea(msg: dict):
 
     session = sessions.create_session(idea)
     sessions.active_session_id = session.session_id
-    print(f"\n  🆕 Session erstellt: {session.session_id}")
-    print(f"     Idee: {idea}")
+    log(f"\n  🆕 Session erstellt: {session.session_id}")
+    log(f"     Idee: {idea}")
 
     bridge.emit({
         "type": "session_started",
@@ -198,11 +192,11 @@ def _run_session_simulation(session):
         # Archive completed session to disk
         try:
             from config import ARCHIVE_ROOT
-            print(f"\n  📦 Archiviere Session {session.session_id}...")
+            log(f"\n  📦 Archiviere Session {session.session_id}...")
             sessions.archive_session(session.session_id, ARCHIVE_ROOT)
-            print(f"  ✅ Archiv gespeichert: {ARCHIVE_ROOT}/{session.session_id}_*/")
+            log(f"  ✅ Archiv gespeichert: {ARCHIVE_ROOT}/{session.session_id}_*/")
         except Exception as e:
-            print(f"  ⚠️  Archiv fehlgeschlagen: {e}")
+            log(f"  ⚠️  Archiv fehlgeschlagen: {e}")
 
         # Broadcast updated session list
         bridge.emit({
@@ -210,13 +204,13 @@ def _run_session_simulation(session):
             "sessions": sessions.list_sessions(),
         })
 
-        print(f"\n{'='*60}\n  SIMULATION ABGESCHLOSSEN\n{'='*60}")
-        print(f"  Firma: {state.company_name}")
-        print(f"  Iterationen: {state.iteration}")
+        log(f"\n{'='*60}\n  SIMULATION ABGESCHLOSSEN\n{'='*60}")
+        log(f"  Firma: {state.company_name}")
+        log(f"  Iterationen: {state.iteration}")
         if state.feedback_history:
-            print(f"  Finale Zufriedenheit: {state.feedback_history[-1].get('satisfaction_score', '?')}")
-        print(f"  Kosten: ${state.total_cost:.4f}")
-        print(f"  💬 CEO Chat verfügbar im Dashboard.")
+            log(f"  Finale Zufriedenheit: {state.feedback_history[-1].get('satisfaction_score', '?')}")
+        log(f"  Kosten: ${state.total_cost:.4f}")
+        log(f"  💬 CEO Chat verfügbar im Dashboard.")
     except Exception as e:
         session.status = "error"
         bridge.emit({
@@ -287,7 +281,7 @@ def run_dashboard(idea: str = "", mode: str = "simulation", topic: str = ""):
     loop_thread.start()
 
     url = f"http://localhost:{port}"
-    print(f"\n  🌐 Dashboard: {url}")
+    log(f"\n  🌐 Dashboard: {url}")
     webbrowser.open(url)
 
     # Small delay so browser connects before simulation starts
@@ -306,15 +300,15 @@ def run_dashboard(idea: str = "", mode: str = "simulation", topic: str = ""):
         })
         _run_session_simulation(session)
     else:
-        print("  ⏳ Warte auf Idee vom Dashboard...")
+        log("  ⏳ Warte auf Idee vom Dashboard...")
 
     # Keep process alive for chat / new simulations
-    print("  💬 Dashboard aktiv. Ctrl+C zum Beenden.")
+    log("  💬 Dashboard aktiv. Ctrl+C zum Beenden.")
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print("\n  Dashboard beendet.")
+        log("\n  Dashboard beendet.")
 
 
 def _run_discussion_with_events(topic: str):
@@ -338,7 +332,7 @@ def _run_discussion_with_events(topic: str):
 
     perspectives = {}
     for name, agent in agents.items():
-        print(f"\n  {name.upper()}...")
+        log(f"\n  {name.upper()}...")
         result = agent.call(
             f"Thema: {topic}\n\n"
             f"Deine Einschätzung als {name}: Chancen, Risiken, Empfehlung. "
@@ -350,7 +344,7 @@ def _run_discussion_with_events(topic: str):
 
     bridge.emit({"type": "phase_start", "phase": "CEO Synthese", "emoji": "👔", "iteration": 0})
 
-    print(f"\n  CEO Synthese...")
+    log(f"\n  CEO Synthese...")
     synthesis = agents["ceo"].call(
         f"Team-Perspektiven zu '{topic}':\n"
         f"{json.dumps(perspectives, ensure_ascii=False, indent=2)}\n\n"
@@ -370,8 +364,8 @@ def _run_discussion_with_events(topic: str):
         },
     })
 
-    print(f"\n{'='*60}\n  ENTSCHEIDUNG:\n{json.dumps(synthesis, ensure_ascii=False, indent=2)[:1000]}\n{'='*60}")
-    print(f"\n  Kosten: ${total:.4f}")
+    log(f"\n{'='*60}\n  ENTSCHEIDUNG:\n{json.dumps(synthesis, ensure_ascii=False, indent=2)[:1000]}\n{'='*60}")
+    log(f"\n  Kosten: ${total:.4f}")
 
     # Persist
     state.total_cost = total
